@@ -22,7 +22,12 @@ MFRC522::MFRC522(	byte chipAddress,
 				) {
 	_chipAddress = chipAddress;
 	_resetPowerDownPin = resetPowerDownPin;
-} // End constructor
+}
+
+MFRC522::MFRC522(byte chipAddress) {
+	_chipAddress = chipAddress;
+	_resetPowerDownPin = 255;
+} // End constructors
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -180,19 +185,24 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
  */
 void MFRC522::PCD_Init() {
 	// Set the chipSelectPin as digital output, do not select the slave yet
-
-	// Set the resetPowerDownPin as digital output, do not reset or power down.
-	pinMode(_resetPowerDownPin, OUTPUT);
-
-
-	if (digitalRead(_resetPowerDownPin) == LOW) {	//The MFRC522 chip is in power down mode.
-		digitalWrite(_resetPowerDownPin, HIGH);		// Exit power down mode. This triggers a hard reset.
-		// Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
-		delay(50);
-	}
-	else { // Perform a soft reset
+    
+	if(_resetPowerDownPin == 255){
 		PCD_Reset();
 	}
+	else{
+		// Set the resetPowerDownPin as digital output, do not reset or power down.
+	    pinMode(_resetPowerDownPin, OUTPUT);
+
+	    if (digitalRead(_resetPowerDownPin) == LOW) {	//The MFRC522 chip is in power down mode.
+			digitalWrite(_resetPowerDownPin, HIGH);		// Exit power down mode. This triggers a hard reset.
+			// Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
+			delay(50);
+	    }
+	    else { // Perform a soft reset
+			PCD_Reset();
+		}
+	}
+	
 
 	// When communicating with a PICC we need a timeout if something goes wrong.
 	// f_timer = 13.56 MHz / (2*TPreScaler+1) where TPreScaler = [TPrescaler_Hi:TPrescaler_Lo].
